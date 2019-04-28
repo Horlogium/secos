@@ -7,6 +7,9 @@
 #include <gpr.h>
 #include <excp.h>
 
+#define INT80 80
+#define INT32 32
+
 #define IDT_NR_DESC                   256
 #define IDT_ISR_ALGN                  16
 
@@ -71,8 +74,9 @@ typedef void (*isr_t)(int_ctx_t*);
       (_dsc_)->offset_2 = addr.whigh;                                   \
       (_dsc_)->p        = 1;                                            \
    })
-
+   
 void intr_init();
+void int80_handler(int_ctx_t* ctx);
 void intr_hdlr(int_ctx_t*) __regparm__(1);
 
 #endif

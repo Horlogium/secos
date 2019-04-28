@@ -191,7 +191,7 @@ typedef struct far_ptr16
 
 typedef struct far_ptr32
 {
-   uint32_t offset;
+   uint32_t offset; //EIP
    uint16_t segment;
 
 } __attribute__((packed)) fptr32_t;

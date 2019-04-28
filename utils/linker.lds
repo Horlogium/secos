@@ -26,5 +26,20 @@ SECTIONS
    .bss      : { *(.bss COMMON)                  } : phsetup
    /DISCARD/ : { *(.note* .indent .comment)      } : phsetup
 
-   __kernel_end__ = .;
+    __kernel_end__ = .;
+
+   . = 0x400000;
+   .user1    : { KEEP(*(.user1)) . = ALIGN(4);   } : phsetup
+
+   . = 0x401000;
+   .usr1_cpt : { KEEP(*(.usr1_cpt)) . = ALIGN(4);   } : phsetup
+
+   . = 0x405000;
+   .user2    : { KEEP(*(.user2)) . = ALIGN(4);   } : phsetup
+
+   . = 0x405100;
+   .usr2_sys : { KEEP(*(.usr2_sys)) . = ALIGN(4);   } : phsetup
+
+   . = 0x406000;
+   .usr2_cpt : { KEEP(*(.usr2_cpt)) . = ALIGN(4);   } : phsetup
 }

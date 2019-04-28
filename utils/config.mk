@@ -34,7 +34,9 @@ core_obj   :=	entry.o \
 		intr.o	\
 		idt.o	\
 		excp.o	\
-		stack.o
+		stack.o \
+		task.o  \
+		schedule.o
 
 objects    := $(addprefix $(CORE), $(core_obj))
 
@@ -48,7 +50,7 @@ LDSCRIPT   := ../utils/linker.lds
 TARGET     := kernel.elf
 
 # Qemu options
-QEMU := $(shell which qemu-system-i386)
+QEMU := $(shell which qemu-system-i386 -enable-kvm)
 #QEMU := $(shell which kvm)
 QFDA := -drive media=disk,format=raw,if=floppy,file=../utils/grub.floppy
 QHDD := -drive media=disk,format=raw,if=ide,index=0,file=fat:rw:.

@@ -2,9 +2,15 @@
 #include <intr.h>
 #include <debug.h>
 #include <info.h>
+#include <task.h>
+#include <cr.h>
 
+#define USR2_COUNTER_PAGE 0x409000
 extern info_t *info;
+extern task_t *current_task;
+extern tss_t  tss;
 extern void idt_trampoline();
+extern void __regparm__(2) schedule();
 static int_desc_t IDT[IDT_NR_DESC];
 
 void intr_init()
@@ -21,12 +27,40 @@ void intr_init()
 
    idtr.desc  = IDT;
    idtr.limit = sizeof(IDT) - 1;
+   idtr.desc[INT80].dpl = 3;
    set_idtr(idtr);
+}
+
+void int80_handler(int_ctx_t* ctx)
+{   
+	uint32_t* counter = (uint32_t*) (ctx->gpr.esi.raw);
+	if (USR2_COUNTER_PAGE <= (uint32_t)counter && (uint32_t)counter + sizeof(*counter) <= USR2_COUNTER_PAGE + PG_4K_SIZE){
+		debug("Compteur : %d\n", *counter);
+	}
+}
+
+void int32_handler()
+{
+	uint32_t** saved_esp = &(current_task->top_stack);
+	current_task = current_task->next_task;
+	set_cr3(current_task->pgd);
+	tss.s0.esp = (uint32_t) current_task->krn_stack;
+	schedule(saved_esp, current_task->top_stack);
 }
 
 void __regparm__(1) intr_hdlr(int_ctx_t *ctx)
 {
-   debug("\nIDT event\n"
+   uint8_t vector = ctx->nr.blow;
+
+   switch(vector) {
+      case INT32:
+         int32_handler();
+         break;
+      case INT80:
+         int80_handler(ctx);
+         break;
+      default:
+         debug("\nIDT event\n"
          " . int    #%d\n"
          " . error  0x%x\n"
          " . cs:eip 0x%x:0x%x\n"
@@ -54,10 +88,9 @@ void __regparm__(1) intr_hdlr(int_ctx_t *ctx)
          ,ctx->gpr.esi.raw
          ,ctx->gpr.edi.raw);
 
-   uint8_t vector = ctx->nr.blow;
-
-   if(vector < NR_EXCP)
-      excp_hdlr(ctx);
-   else
-      debug("ignore IRQ %d\n", vector);
+         if(vector < NR_EXCP)
+            excp_hdlr(ctx);
+         else
+            debug("ignore IRQ %d\n", vector);
+   }
 }
